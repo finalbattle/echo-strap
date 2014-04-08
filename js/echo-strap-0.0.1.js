@@ -587,7 +587,7 @@ $ToolBox = function(options){ return new $ToolBox.fn.init(options); }; $ToolBox.
     var _generate_id = $GenerateId({length:10}).generateStr();
     this._id = this._options.id = options.id || _generate_id;
     this._message = this._options.message = options.message || "";
-    this._html = this._options.html = options.html || "<div>&nbsp;</div>";
+    this._html = this._options.html = options.html || "";
     this._title = this._options.title = options.title || "Title";
     this._appendTo = this._options.appendTo = options.appendTo || "";
     this._direction = this._options.direction = this._options.placement = options.direction || options.placement || "bottom";
@@ -600,7 +600,12 @@ $ToolBox = function(options){ return new $ToolBox.fn.init(options); }; $ToolBox.
   },
   createBox: function(){
     var self = this;
-    if(!$("#"+this._id)) return this;
+    $(document).bind("keypress", function(event){
+          self.tHide(event)
+          //self.onHide();
+          //$("#"+self._id).tHide();
+    })
+    if($chk($("#"+this._id)[0])) return this;
     this._toolbox_dialog = $(document.createElement("div")).addClass("popover")
                             .attr({"style":"display:none", "id":this._id}).appendTo("body");
     this._toolbox_arrow = $(document.createElement("div")).addClass("arrow")
@@ -610,8 +615,10 @@ $ToolBox = function(options){ return new $ToolBox.fn.init(options); }; $ToolBox.
     $(document.createElement("span")).appendTo(this._toolbox_title)
     $(document.createElement("button")).addClass("tipclose")
           .text("×")
-          .bind("click", function(){
-              $("#"+self._id).tHide();
+          .bind("click", function(event){
+              self.tHide(event)
+              //self.onHide();
+              //$("#"+self._id).tHide();
           })
           .appendTo(this._toolbox_title);
     this.appendButtons(this._buttons);
@@ -621,6 +628,9 @@ $ToolBox = function(options){ return new $ToolBox.fn.init(options); }; $ToolBox.
     $(document.createElement("div")).attr({name:"buttons"}).addClass("col-sm-offset-4").addClass("col-sm-8").appendTo(this._content_buttons)
     $('#'+this._id).find('h3.popover-title span').text(this._title);
     $('#'+this._id).find('div.popover-content p[name=content]').html(this._message);
+    if(self._html){
+      self.setHtml(self._html)
+    }
     this.appendButtons(this._buttons);
   },
   setTitle: function(_title){
@@ -651,6 +661,17 @@ $ToolBox = function(options){ return new $ToolBox.fn.init(options); }; $ToolBox.
       $('#'+this._id).find('div[name=buttons]').append("&nbsp;");
     }
     return this;
+  },
+  tHide:function(event){
+    var self = this;
+    if (!$defined(event)) return
+    if (event && event.keyCode == 27 || event && event.type=="click"){
+      self.onHide();
+      $(document).unbind("keypress", this.tHide())
+      $("#"+self._id).tHide();
+    }
+  },
+  onHide: function(){
   },
   show: function(opts){
     var self = this;
