@@ -583,6 +583,7 @@ $ToolBox = function(options){ return new $ToolBox.fn.init(options); }; $ToolBox.
   init: function(options){
     options = options || {};
     this._options = options || {};
+    var self = this;
     var _generate_id = $GenerateId({length:10}).generateStr();
     this._id = this._options.id = options.id || _generate_id;
     this._message = this._options.message = options.message || "";
@@ -599,78 +600,62 @@ $ToolBox = function(options){ return new $ToolBox.fn.init(options); }; $ToolBox.
   },
   createBox: function(){
     var self = this;
-    $(this._appendTo).popover(this._options);
-    $(this._appendTo).popover("show");
-    var button = document.createElement("button");
-    $(button).addClass("tipclose")
-          //.attr({type:"button", })
+    if(!$("#"+this._id)) return this;
+    this._toolbox_dialog = $(document.createElement("div")).addClass("popover")
+                            .attr({"style":"display:none", "id":this._id}).appendTo("body");
+    this._toolbox_arrow = $(document.createElement("div")).addClass("arrow")
+                            .attr({"style":"display:none"});
+    this._toolbox_title = $(document.createElement("h3")).addClass("popover-title")
+                                .attr({style:"cursor:move"}).appendTo(this._toolbox_dialog);
+    $(document.createElement("span")).appendTo(this._toolbox_title)
+    $(document.createElement("button")).addClass("tipclose")
           .text("×")
-          //.attr({type:"button", 
-          //       "data-dismiss":"alert", 
-          //       "aria-hidden":"true"})
           .bind("click", function(){
-            $(self._appendTo).popover("destroy");
+              $("#"+self._id).tHide();
           })
-          .appendTo($("div.popover h3"));
-    $(button).parent().parent().attr({id:self._id});
-    this._toolbox_dialog = $("#"+this._id)
-    this._toolbox_dialog.find("div.popover-content").html(this._html);
-    this._toolbox_dialog.css("z-index", "1031");
-    this._toolbox_dialog.css("display", "none");
-    for(var item in this._styles){
-      this._toolbox_dialog.css(item, this._styles[item]);
-    }
-    this._toolbox_dialog.removeClass("in");
-    this._toolbox_dialog.drags({handle:"h3.popover-title"});
-    if (this._arrow==false) this._toolbox_dialog.find('div.arrow').css('display', 'none')
+          .appendTo(this._toolbox_title);
+    this.appendButtons(this._buttons);
+    this._toolbox_content = $(document.createElement("div")).addClass("popover-content").appendTo(this._toolbox_dialog)
+    $(document.createElement("p")).attr({name:"content", style:"padding:5px"}).appendTo(this._toolbox_content)
+    this._content_buttons = $(document.createElement("div")).attr({style:"margin-bottom:0px"}).addClass("form-group").appendTo(this._toolbox_content)
+    $(document.createElement("div")).attr({name:"buttons"}).addClass("col-sm-offset-4").addClass("col-sm-8").appendTo(this._content_buttons)
+    $('#'+this._id).find('h3.popover-title span').text(this._title);
+    $('#'+this._id).find('div.popover-content p[name=content]').html(this._message);
     this.appendButtons(this._buttons);
   },
+  setTitle: function(_title){
+    $('#'+this._id).find('h3.popover-title span').text(_title);
+    return this;
+  },
   setHtml: function(_html){
-    this._toolbox_dialog.find("div.popover-content").html(_html);
+    $('#'+this._id).find('div.popover-content p[name=content]').html(_html);
     return this;
   },
   appendButtons: function(buttons){
     var self = this;
-    try{$(self._toolbox_dialog.find("#popover-buttons").remove())}catch(e){}
-    if (buttons.length > 0) this._toolbox_dialog.find("div.popover-content").append("<div id='popover-buttons' style='align:center'>")
-    for(var i=0;i<buttons.length;i++){
-      var btn = buttons[i];
-      var button = document.createElement("button");
-      $(button).addClass("btn btn-primary")
-            .attr({type:"button"})
-            .text(btn.text)
-            .bind("click", btn.action)
-      this._toolbox_dialog.find("div.popover-content #popover-buttons").append($(button))
+    $('#'+this._id).find('div[name=buttons]').html('');
+    for(var i=0; i<=buttons.length; i++){
+      if(buttons[i]==null) break;
+      var text = buttons[i].text;
+      var action = buttons[i].action;
+      var id = buttons[i].id || Math.random();
+      var ele = $(document.createElement('button'));
+          ele.attr({
+        'class': 'btn btn-warning',
+        "loading_text":"正在提交",
+        "complete_text": "确定",
+        id: id,
+        value: text,
+      }).bind("click", action).html(text)
+      $('#'+this._id).find('div[name=buttons]').append(ele);
+      $('#'+this._id).find('div[name=buttons]').append("&nbsp;");
     }
     return this;
   },
-  show: function(){
-    //$(this._appendTo).popover("show");
+  show: function(opts){
     var self = this;
-    var left = 0, top = 0;
-    if (self._direction == 'bottom'){
-      left = parseInt($(this._appendTo).css("width")) / 2 + $(this._appendTo).position().left - parseInt(this._toolbox_dialog.css("width")) / 2;
-      top = parseInt($(this._appendTo).css("height")) + $(this._appendTo).position().top;
-    }
-    if (self._direction == 'top'){
-      left = parseInt($(this._appendTo).css("width")) / 2 + $(this._appendTo).position().left - parseInt(this._toolbox_dialog.css("width")) / 2;
-      top = $(this._appendTo).position().top - parseInt(this._toolbox_dialog.css("height"));
-    }
-    if (self._direction == 'left'){
-      left = $(this._appendTo).position().left - parseInt(this._toolbox_dialog.css("width"));
-      top = parseInt($(this._appendTo).css("height")) / 2 + $(this._appendTo).position().top - parseInt(this._toolbox_dialog.css("height")) / 2;
-    }
-    if (self._direction == 'right'){
-      left = parseInt($(this._appendTo).css("width")) + $(this._appendTo).position().left;
-      top = parseInt($(this._appendTo).css("height")) / 2 + $(this._appendTo).position().top - parseInt(this._toolbox_dialog.css("height")) / 2;
-    }
-    this._toolbox_dialog.css("display", "block");
-    this._toolbox_dialog.css("left", left);
-    if (parseInt(top) != 0)
-      this._toolbox_dialog.css("top", top);
-    this._toolbox_dialog.addClass("in");
-    self._options.relativeTo = $(this._appendTo);
-    this._toolbox_dialog.stick(this._options);
+    this._options = $.extend({drag_handle:$('#{0} .popover-title'.format(this._id)), modal:true}, opts)
+    $("#"+this._id).fshow(this._options)
     //return this;
   }
 }; $ToolBox.fn.init.prototype = $ToolBox.fn;
